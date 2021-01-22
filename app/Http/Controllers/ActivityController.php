@@ -16,10 +16,22 @@ class ActivityController extends Controller
     public function index()
     {
         //
-        $data = Activity::with('activity_type')->where('id', '>', '110')->get();
-        $data2 = ActivityType::with('activity')->get();
-        $data3 = Activity::with(['activity_type'])->where('id', '>', '110')->get();
-        dd($data,$data2,$data3);
+        // $data = Activity::with('activity_type')->where('id', '>', '110')->get();
+        // $data2 = ActivityType::with('activity')->get();
+        // $data3 = Activity::with(['activity_type'])->where('id', '>', '110')->get();
+        // dd($data,$data2,$data3);
+        return view('Activity.index');
+    }
+
+    public function api() {
+        $httpCode = 200;
+        try {
+            $response = Activity::get()->paginate(10);
+        } catch (\Exception $e) {
+            $response = $e->getMessage();
+            $httpCode = 400;
+        }
+        return response()->json(['response' => $response], $httpCode);
     }
 
     /**
