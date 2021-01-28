@@ -13,8 +13,7 @@ use Illuminate\Support\Facades\Route;
 |
  */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::prefix('a01')->group(function () {
+    Route::resource('a01110', 'A01110Controller');
 
-Route::resource('activity', ActivityController::class);
+});
