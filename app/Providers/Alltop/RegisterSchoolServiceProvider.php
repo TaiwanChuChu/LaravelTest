@@ -64,6 +64,8 @@ class RegisterSchoolServiceProvider extends ServiceProvider
 
         // Insanace Service Class
         $this->instanceFormInterface($schoolNo);
+
+        $this->instanceFormApiInterface($schoolNo);
     }
 
     // 載入公版路由
@@ -119,18 +121,45 @@ class RegisterSchoolServiceProvider extends ServiceProvider
         });
     }
 
+    /**
+     * Insanace Api Service Class
+     * 
+     * @param $schoolNo 學校編號
+     * @return service
+     */
+    public function instanceFormApiInterface($schoolNo) {
+        $this->app->bind('App\Contracts\Service\FormApiServiceInterFace', function ($app) use ($schoolNo) {
+
+            // 如果不是使用request方式進入網頁，則回傳空的FormService
+            if(is_null(request()->route())) {
+                return $app->make('App\Service\FormApiService');
+            }
+
+            $action = request()->route()->getAction();
+            $namespace = $action['namespace'] . '\\';
+            
+            $apiVersion = strtoupper(explode('/', $action['prefix'])[1]);
+           
+            /**
+             * 0 => "Modules"
+             * 1 => "BASE"
+             * 2 => "A01"
+             * 3 => "Http"
+             * 4 => "Controllers"
+             * 5 => "Web"
+             * 6 => "A01110Controller@index"
+             */
+            $controller  = explode('\\', $action['controller']);
+
+            $MenuName = explode('Controller', $controller[6]);
+            $ServiceName = "Modules\\{$schoolNo}\\{$controller[2]}\\Service\\{$MenuName[0]}\\{$controller[5]}\\{$apiVersion}\\{$MenuName[0]}ApiService";
+            
+            // dd($ServiceName);
+            // dd(class_exists($ServiceName));
+            if (class_exists($ServiceName)) {
+                return $app->make($ServiceName);
+            }
+        });
+    }
+
 }
-  // $this->app->bind(FormRequest::class, function ($app) {
-        //     $school_no = config('app.school_no') == '' ? 'BASE' : config('app.school_no');
-
-        //     $action = request()->route()->getAction();
-
-        //     $namespace = $action['namespace'] . '\\';
-
-        //     $controller = explode('\\', $action['controller']);
-
-        //     $ServiceName = explode('Controller', 'App\Http\Requests\\' . $controller[5])[0] . 'FormRequest';
-        //     if (class_exists($ServiceName)) {
-        //         return $app->make($ServiceName);
-        //     }
-        // });

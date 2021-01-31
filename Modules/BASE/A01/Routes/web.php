@@ -14,5 +14,5 @@ use Illuminate\Support\Facades\Route;
  */
 
 Route::prefix('a01')->group(function () {
-    Route::resource('a01110', 'A01110Controller');
+    Route::resource('a01110', 'A01110Controller')->except(['store', 'update', 'destroy']);
 });

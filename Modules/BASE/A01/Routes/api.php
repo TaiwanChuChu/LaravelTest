@@ -15,6 +15,7 @@
 //     return $request->user();
 // });
 
-// Route::prefix('/v1')->group(function(){
-//     Route::get('/activity', 'ActivityController@api')->name('api.activity');
-// });
+// middleware('auth:api')
+Route::prefix('/v1/a01')->group(function(){
+    Route::resource('a01110', 'A01110Controller')->only(['store', 'update', 'destroy']);
+});
