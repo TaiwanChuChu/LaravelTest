@@ -1,6 +1,7 @@
 <?php
-namespace Modules\BASE\A01\A01110\Service;
+namespace Modules\BASE\A01\Service\A01110\Web;
 
+use Illuminate\Http\Request;
 use App\Contracts\Service\FormServiceInterFace;
 
 class A01110Service implements FormServiceInterFace

@@ -13,8 +13,8 @@ use Illuminate\Support\Facades\Route;
 |
  */
 
-Route::prefix('a02')->group(function () {
-    Route::get('a02110', function () {
+Route::prefix('a01')->group(function () {
+    Route::get('a01130', function(){
 
     });
 });

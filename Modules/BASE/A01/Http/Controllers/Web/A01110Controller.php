@@ -1,9 +1,10 @@
 <?php
 
-namespace Modules\BASE\A01\Http\Controllers;
+namespace Modules\BASE\A01\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Contracts\Service\FormServiceInterFace;
 
 class A01110Controller extends Controller
 {

@@ -18,7 +18,8 @@ class RegisterSchoolServiceProvider extends ServiceProvider
      */
     const MODULES = [
         'A01',
-        'A02'
+        'A02',
+        'A03',
     ];
     /**
      * Bootstrap services.
@@ -28,64 +29,98 @@ class RegisterSchoolServiceProvider extends ServiceProvider
     public function boot()
     {
         $schoolNo = config('Alltop.core.SCHOOL_NO') == '' ? 'BASE' : config('Alltop.core.SCHOOL_NO');
+
         // 專案資料夾路徑
         $root = base_path("Modules\\${schoolNo}");
 
         if (!is_dir($root)) {
-            throw new \Exception('提供的路徑無router檔案可載入!');
+            throw new \Exception('提供的路徑無法載入!');
         }
-{
-    name:
-    path:
-    children: [{
-        
-    }]
-}
-        /**
-         * 載入各系統的web、api
-         */
-        foreach (self::MODULES as $sysPath) {
-            $rootSys   = base_path("Modules\\${schoolNo}\\${sysPath}");
-            $routePath = $rootSys . '\\Routes';
+        $this->routes(function() use ($schoolNo) {
+            /**
+             * 載入各系統的web、api
+             */
+            foreach (self::MODULES as $sysPath) {
+                // BASE Route and View
+                $this->BaseRoute($sysPath);
 
-            if (is_dir($routePath)) {
-                $namespace = "Modules\\${schoolNo}\\${sysPath}\\Http\\Controllers";
+                // 載入view路徑，並設定別名
+                $this->loadViewsFrom(base_path("Modules/BASE/${sysPath}/Resources/views/"), "BASE_${sysPath}");
 
-                // 如果無該資料夾，則直接略過
-                if (!is_dir($routePath)) {
-                    continue;
+                $rootSys   = base_path("Modules\\${schoolNo}\\${sysPath}");
+                $routePath = $rootSys . '\\Routes';
+
+                // 如果無該資料夾，則不載入
+                if (is_dir($routePath)) {
+                    $namespace = "Modules\\${schoolNo}\\${sysPath}\\Http\\Controllers";
+                    Route::prefix('api')->namespace($namespace . '\Api')->group($routePath . '/api.php');
+                    Route::middleware('web')->namespace($namespace. '\Web')->group($routePath . '/web.php');
                 }
-                $this->routes(function () use ($routePath, $namespace, $sysPath, $schoolNo) {
-                    Route::prefix('api')
-                        ->namespace($namespace)
-                        ->group($routePath . '/api.php');
-                    Route::middleware('web')
-                        ->namespace($namespace)
-                        ->group($routePath . '/web.php');
-
-                    // 載入view路徑，並設定別名
-                    $this->loadViewsFrom(base_path("Modules/${schoolNo}/${sysPath}/Resources/views/"), "${schoolNo}_${sysPath}");
-                });
-
+            
+                // 載入view路徑，並設定別名
+                $this->loadViewsFrom(base_path("Modules/${schoolNo}/${sysPath}/Resources/views/"), "${schoolNo}_${sysPath}");
             }
-        }
+        });
 
-        $this->app->bind(FormServiceInterFace::class, function ($app) use ($schoolNo) {
-            $school_no = $schoolNo;
+        // Insanace Service Class
+        $this->instanceFormInterface($schoolNo);
+    }
+
+    // 載入公版路由
+    public function BaseRoute($sysPath) {
+        // BASE Route and View
+        $rootSys   = base_path("Modules\\BASE\\${sysPath}");
+        $routePath = $rootSys . '\\Routes';
+
+        // 如果無該資料夾，則不載入
+        if (is_dir($routePath)) {
+            Route::prefix('api')->namespace("Modules\\BASE\\${sysPath}\\Http\\Controllers\Api")->group($routePath . '/api.php');
+            Route::middleware('web')->namespace("Modules\\BASE\\${sysPath}\\Http\\Controllers\Web")->group($routePath . '/web.php');
+        }
+    }
+
+    /**
+     * Insanace Service Class
+     * 
+     * @param $schoolNo 學校編號
+     * @return service
+     */
+    public function instanceFormInterface($schoolNo) {
+        $this->app->bind('App\Contracts\Service\FormServiceInterFace', function ($app) use ($schoolNo) {
+
+            // 如果不是使用request方式進入網頁，則回傳空的FormService
+            if(is_null(request()->route())) {
+                return $app->make('App\Service\FormService');
+            }
 
             $action = request()->route()->getAction();
-
             $namespace = $action['namespace'] . '\\';
-
+           
+            /**
+             * 0 => "Modules"
+             * 1 => "BASE"
+             * 2 => "A01"
+             * 3 => "Http"
+             * 4 => "Controllers"
+             * 5 => "Web"
+             * 6 => "A01110Controller@index"
+             */
             $controller  = explode('\\', $action['controller']);
-            $ServiceName = explode('Controller', 'App\Service\\' . $school_no . '\\' . $controller[4] . '\\' . $controller[5])[0] . 'Service';
-//            dd($ServiceName);
+            // dd($controller);
+
+            $MenuName = explode('Controller', $controller[6]);
+            $ServiceName = "Modules\\{$schoolNo}\\{$controller[2]}\\Service\\{$MenuName[0]}\\{$controller[5]}\\{$MenuName[0]}Service";
+            
+            // dd($ServiceName);
+            // dd(class_exists($ServiceName));
             if (class_exists($ServiceName)) {
                 return $app->make($ServiceName);
             }
         });
+    }
 
-        // $this->app->bind(FormRequest::class, function ($app) {
+}
+  // $this->app->bind(FormRequest::class, function ($app) {
         //     $school_no = config('app.school_no') == '' ? 'BASE' : config('app.school_no');
 
         //     $action = request()->route()->getAction();
@@ -99,6 +134,3 @@ class RegisterSchoolServiceProvider extends ServiceProvider
         //         return $app->make($ServiceName);
         //     }
         // });
-
-    }
-}
